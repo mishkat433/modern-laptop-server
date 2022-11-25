@@ -32,6 +32,24 @@ async function run() {
         })
 
 
+        // payment Section
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment)
+            const id = payment.bookingId;
+            const query = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transectionId: payment.transectionId
+                }
+            }
+            const updateResult = await bookingCollection.updateOne(query, updatedDoc)
+            res.send(result);
+        })
+
+
         // Product section
 
         app.get('/product/:id', async (req, res) => {
@@ -41,11 +59,32 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/myProduct/:email', async (req, res) => {
+            const findEmail = req.params.email;
+            const query = {}
+            const result = await productCollection.find({}).toArray()
+            const arr = []
+            result.forEach(data => {
+                if (data.productInfo.sealerEmail === findEmail) {
+                    arr.push(data)
+                }
+            })
+            return res.send(arr)
+        })
+
         app.post('/addProduct', async (req, res) => {
             const data = req.body
             const cursor = await productCollection.insertOne(data)
             res.send(cursor)
         })
+        app.delete("/deleteProduct/:id", async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: ObjectId(id) }
+            const cursor = await productCollection.deleteOne(filter)
+            res.send(cursor)
+        })
+
 
         // booking Section
 
@@ -74,7 +113,6 @@ async function run() {
             const filter = { _id: ObjectId(id) }
             const cursor = await bookingCollection.deleteOne(filter)
             res.send(cursor)
-            console.log(cursor);
         })
 
         // user login/signup section

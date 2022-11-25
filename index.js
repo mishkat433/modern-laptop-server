@@ -50,10 +50,18 @@ async function run() {
         // booking Section
 
         app.get('/myBooking/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = { email: email }
-            const result = await bookingCollection.find(query).toArray()
-            return res.send(result)
+            const findEmail = req.params.email;
+
+            const query = {}
+            const result = await bookingCollection.find({}).toArray()
+            console.log(result);
+            const arr = []
+            result.forEach(data => {
+                if (data.bookingData.userEmail === findEmail) {
+                    arr.push(data)
+                }
+            })
+            return res.send(arr)
         })
 
         app.post('/booking', async (req, res) => {

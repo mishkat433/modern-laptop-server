@@ -3,7 +3,7 @@ const express = require('express');
 const app = express()
 const cors = require('cors');
 const PORT = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(cors())
 app.use(express.json())
@@ -54,7 +54,6 @@ async function run() {
 
             const query = {}
             const result = await bookingCollection.find({}).toArray()
-            console.log(result);
             const arr = []
             result.forEach(data => {
                 if (data.bookingData.userEmail === findEmail) {
@@ -68,6 +67,14 @@ async function run() {
             const data = req.body
             const cursor = await bookingCollection.insertOne(data)
             res.send(cursor)
+        })
+
+        app.delete('/deleteBooking/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const cursor = await bookingCollection.deleteOne(filter)
+            res.send(cursor)
+            console.log(cursor);
         })
 
         // user login/signup section

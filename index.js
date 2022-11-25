@@ -21,6 +21,7 @@ async function run() {
         const categoryCollection = client.db("modernLaptop").collection("category");
         const userCollection = client.db("modernLaptop").collection("user");
         const productCollection = client.db("modernLaptop").collection("product");
+        const bookingCollection = client.db("modernLaptop").collection("booking");
 
         // Category section
 
@@ -30,7 +31,9 @@ async function run() {
             res.send(result)
         })
 
+
         // Product section
+
         app.get('/product/:id', async (req, res) => {
             const id = req.params.id
             const query = { selectCategory: id }
@@ -44,17 +47,43 @@ async function run() {
             res.send(cursor)
         })
 
+        // booking Section
+
+        app.get('/myBooking/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await bookingCollection.find(query).toArray()
+            return res.send(result)
+        })
+
+        app.post('/booking', async (req, res) => {
+            const data = req.body
+            const cursor = await bookingCollection.insertOne(data)
+            res.send(cursor)
+        })
 
         // user login/signup section
         app.get('/saveUser', async (req, res) => {
-            let qurery = {}
-            if (req.query.email) {
-                qurery = { email: req.query.email }
-                const result = await userCollection.findOne(qurery)
-                return res.send(result)
-            }
-
+            let query = { email: req.query.email }
+            const result = await userCollection.find(query).toArray()
+            return res.send(result)
         })
+
+        app.get('/users/check/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await userCollection.findOne(query)
+            if (user?.userType === 'user') {
+                return res.send({ useCheck: user?.userType })
+            }
+            if (user?.userType === 'sealer') {
+                return res.send({ useCheck: user?.userType })
+            }
+            if (user?.userType === 'admin') {
+                return res.send({ useCheck: user?.userType })
+            }
+        })
+
 
         app.post("/saveUser", async (req, res) => {
             const userData = req.body;

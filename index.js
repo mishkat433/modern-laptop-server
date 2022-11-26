@@ -107,6 +107,18 @@ async function run() {
             return res.send(arr)
         })
 
+        app.get('/advetiseItems', async (req, res) => {
+            const query = {}
+            const result = await productCollection.find(query).sort({ _id: -1 }).toArray()
+            const adItem = []
+            result.forEach(data => {
+                if (data?.advertise && data?.payment !== "paid") {
+                    adItem.push(data)
+                }
+            })
+            return res.send(adItem)
+        })
+
         app.post('/addProduct', async (req, res) => {
             const data = req.body
             const cursor = await productCollection.insertOne(data)

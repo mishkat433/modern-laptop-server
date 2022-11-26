@@ -3,6 +3,7 @@ const express = require('express');
 const app = express()
 const cors = require('cors');
 const PORT = process.env.PORT || 5000;
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
@@ -25,7 +26,20 @@ async function run() {
         const bookingCollection = client.db("modernLaptop").collection("booking");
         const paymentCollection = client.db("modernLaptop").collection("payments");
 
-        // Category section
+
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email }
+            const user = await userCollection.find(query)
+            if (user) {
+                const token = jwt.sign({ email }, process.env.JSON_SECRET_KEY, { expiresIn: '1d' })
+                return res.send({ accessToken: token })
+            }
+            res.status(403).send({ accessToken: "Forbidden Access" })
+        })
+
+
+        // ---------------------- Category section ----------------------------
 
         app.get("/categories", async (req, res) => {
             const query = {}
@@ -34,7 +48,7 @@ async function run() {
         })
 
 
-        // payment Section
+        //--------------------------- payment Section-----------------------
 
         app.post('/create-payment', async (req, res) => {
             const booking = req.body;
@@ -79,7 +93,7 @@ async function run() {
         })
 
 
-        // Product section
+        //------------------- Product section------------------------
 
         app.get('/product/:id', async (req, res) => {
             const id = req.params.id
@@ -147,7 +161,7 @@ async function run() {
         })
 
 
-        // booking Section
+        //------------------------------ booking Section ----------------------------
 
         app.get('/myBooking/:email', async (req, res) => {
             const findEmail = req.params.email;
@@ -183,11 +197,11 @@ async function run() {
             res.send(cursor)
         })
 
-        // user login/signup section
+        // ---------------------------- user login/signup section  ---------------------------------
         app.get('/saveUser', async (req, res) => {
-            const quoryEmail = req.query.email
+            const queryEmail = req.query.email
             let query = {}
-            if (quoryEmail) {
+            if (queryEmail) {
                 query = { email: req.query.email }
             }
             const result = await userCollection.find(query).toArray()
@@ -238,6 +252,13 @@ async function run() {
             }
             const result = await userCollection.updateOne(filter, makeAdminDoc, options)
             res.send(result)
+        })
+
+        app.delete('/deleteAdmin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const cursor = await userCollection.deleteOne(filter)
+            res.send(cursor)
         })
 
 

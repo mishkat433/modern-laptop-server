@@ -2,7 +2,6 @@ require('dotenv').config()
 const express = require('express');
 const app = express()
 const cors = require('cors');
-// const jwt = require('jsonwebtoken');
 const PORT = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -86,13 +85,19 @@ async function run() {
             const id = req.params.id
             const query = { selectCategory: id }
             const result = await productCollection.find(query).toArray()
-            res.send(result)
+            const arr = []
+            result.forEach(data => {
+                if (data.payment !== "paid") {
+                    arr.push(data)
+                }
+            })
+            return res.send(arr)
         })
 
         app.get('/myProduct/:email', async (req, res) => {
             const findEmail = req.params.email;
             const query = {}
-            const result = await productCollection.find(query).toArray()
+            const result = await productCollection.find(query).sort({ _id: -1 }).toArray()
             const arr = []
             result.forEach(data => {
                 if (data.productInfo.sealerEmail === findEmail) {
@@ -107,6 +112,20 @@ async function run() {
             const cursor = await productCollection.insertOne(data)
             res.send(cursor)
         })
+
+        app.put('/productAdvertise/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const addAdvertise = {
+                $set: {
+                    advertise: 'advertise'
+                }
+            }
+            const result = await productCollection.updateOne(filter, addAdvertise, options)
+            res.send(result)
+        })
+
         app.delete("/deleteProduct/:id", async (req, res) => {
             const id = req.params.id;
             console.log(id);
@@ -154,7 +173,11 @@ async function run() {
 
         // user login/signup section
         app.get('/saveUser', async (req, res) => {
-            let query = { email: req.query.email }
+            const quoryEmail = req.query.email
+            let query = {}
+            if (quoryEmail) {
+                query = { email: req.query.email }
+            }
             const result = await userCollection.find(query).toArray()
             return res.send(result)
         })
@@ -174,11 +197,35 @@ async function run() {
             }
         })
 
-
         app.post("/saveUser", async (req, res) => {
             const userData = req.body;
             const cursor = await userCollection.insertOne(userData)
             res.send(cursor)
+        })
+
+        app.put('/verifyUser/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const verifyDoc = {
+                $set: {
+                    verify: 'verified'
+                }
+            }
+            const result = await userCollection.updateOne(filter, verifyDoc, options)
+            res.send(result)
+        })
+        app.put('/makeAdmin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const makeAdminDoc = {
+                $set: {
+                    userType: 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(filter, makeAdminDoc, options)
+            res.send(result)
         })
 
 

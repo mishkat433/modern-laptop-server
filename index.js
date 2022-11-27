@@ -95,10 +95,11 @@ async function run() {
             const updatedDoc = {
                 $set: {
                     payment: 'paid',
+                    productStatus: 'soldOut',
                     transactionId: payment.transactionId
                 }
             }
-            const updateResult = await bookingCollection.updateOne(query, updatedDoc)
+            const updateResult = await bookingCollection.updateMany(query, updatedDoc)
 
             const productUpdate = payment.productId;
             const filter = { _id: ObjectId(productUpdate) }
@@ -157,6 +158,18 @@ async function run() {
             return res.send(adItem)
         })
 
+        app.get('/reportedProducts', async (req, res) => {
+            const query = {}
+            const result = await productCollection.find(query).toArray()
+            const arr = []
+            result.forEach(data => {
+                if (data.report) {
+                    arr.push(data)
+                }
+            })
+            return res.send(arr)
+        })
+
         app.post('/addProduct', veryfyJWT, async (req, res) => {
             const data = req.body
             const jwtEmail = req.query.email;
@@ -184,9 +197,21 @@ async function run() {
             res.send(result)
         })
 
+        app.put('/reportProduct/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const addAdvertise = {
+                $set: {
+                    report: true
+                }
+            }
+            const result = await productCollection.updateOne(filter, addAdvertise, options)
+            res.send(result)
+        })
+
         app.delete("/deleteProduct/:id", async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const filter = { _id: ObjectId(id) }
             const cursor = await productCollection.deleteOne(filter)
             res.send(cursor)
@@ -299,8 +324,6 @@ async function run() {
             const cursor = await userCollection.deleteOne(filter)
             res.send(cursor)
         })
-
-
     }
     finally { }
 }

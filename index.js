@@ -318,7 +318,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/deleteAdmin/:id', async (req, res) => {
+        app.delete('/deleteUser/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) }
             const cursor = await userCollection.deleteOne(filter)

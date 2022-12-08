@@ -34,7 +34,6 @@ function veryfyJWT(req, res, next) {
 }
 
 
-
 async function run() {
     try {
         const categoryCollection = client.db("modernLaptop").collection("category");
